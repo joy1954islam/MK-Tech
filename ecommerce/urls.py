@@ -13,7 +13,10 @@ router.register('product-search', views.ProductSearchViewSet, basename='product_
 router.register('admin-view-all-customer-list', views.AllCustomerListViewSet, basename='admin_view_all_customer_list')
 
 router.register('order-create', views.CreateOrderViewSet, basename='order_create')
+
 router.register('order-status-change', views.OrderStatusChangeViewSet, basename='order_status_change')
+
+router.register('admin-view-all-order', views.AdminViewAllOrderList, basename='admin_view_all_order')
 
 urlpatterns = [
     # API view Route

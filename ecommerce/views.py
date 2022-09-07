@@ -285,3 +285,24 @@ class OrderStatusChangeViewSet(ViewSet):
                 'message': 'you are not admin'
             }
             return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminViewAllOrderList(ViewSet):
+
+    def retrieve(self, request, pk=None):
+        user = User.objects.filter(id=pk, is_superuser=True)
+        if len(user) != 0:
+            order = Order.objects.all()
+            order_serializer = AdminViewOrderListSerializer(order, many=True)
+            dict_response = {
+                'error': False,
+                'message': 'all order list',
+                'data': order_serializer.data
+            }
+            return Response(dict_response, status=status.HTTP_200_OK)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'you are not admin'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)

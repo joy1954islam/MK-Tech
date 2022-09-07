@@ -151,3 +151,26 @@ class ProductSearchViewSet(ViewSet):
                 'message': 'search key required'
             }
             return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AllCustomerListViewSet(ViewSet):
+
+    def retrieve(self, request, pk=None):
+
+        user = User.objects.filter(id=pk, is_superuser=True)
+        if len(user) != 0:
+            all_customer = User.objects.filter(is_staff=False)
+            all_customer_serializer = UserSerializer(all_customer, many=True)
+            dict_response = {
+                'error': False,
+                'message': 'all customer list',
+                'data': all_customer_serializer.data,
+                'total_customer': all_customer.count()
+            }
+            return Response(dict_response, status=status.HTTP_200_OK)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'you are not admin'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)

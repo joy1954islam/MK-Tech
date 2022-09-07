@@ -207,7 +207,7 @@ class CreateOrderViewSet(ViewSet):
 
             for p in range(0, len(product_id_split)):
                 product_value = product_id_split[p]
-                product_quantity = product_id_split[p]
+                product_quantity = quantity_split[p]
                 product = Product.objects.filter(id=product_value)
                 order_details_create = {}
                 order_details_create['order_id'] = order_id
@@ -231,5 +231,57 @@ class CreateOrderViewSet(ViewSet):
             dict_response = {
                 'error': True,
                 'message': 'order not create'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrderStatusChangeViewSet(ViewSet):
+
+    def update(self, request, pk=None):
+        user = User.objects.filter(id=pk, is_superuser=True)
+        if len(user) != 0:
+            order_status = request.data['order_status']
+            order_id = request.data['order_id']
+            order = Order.objects.filter(id=order_id)
+            if len(order) != 0:
+                order = order[0]
+                print('order = ', order)
+                print('order id = ', order.id)
+                if order_status == 'delivered':
+                    order_details = OrderDetails.objects.filter(order_id=order.id)
+                    print('order_details = ', order_details)
+                    if len(order_details) != 0:
+                        for o in range(0, len(order_details)):
+                            order_detail = order_details[o]
+                            order_detail_product_id = order_detail.product_id.id
+                            order_detail_quantity = order_detail.quantity
+                            product = Product.objects.get(id=order_detail_product_id)
+                            if product.stock >= order_detail_quantity:
+                                print('if condition work')
+                                available_stock = product.stock - order_detail_quantity
+                                product.stock = available_stock
+                                product.save()
+                                order_detail.is_delivered = True
+                                order_detail.save()
+                            else:
+                                order_detail.is_delivered = False
+                                order_detail.save()
+                            print('order_detail_product_id = ', order_detail_product_id)
+                            print('order_detail_quantity = ', order_detail_quantity)
+                            print('order_details = ', order_detail)
+                        order.order_status = 'delivered'
+                        order.save()
+                else:
+                    order.order_status = 'returned'
+                    order.save()
+            dict_response = {
+                'error': False,
+                'message': 'order status change'
+            }
+            return Response(dict_response, status=status.HTTP_200_OK)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'you are not admin'
             }
             return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)

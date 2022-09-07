@@ -4,6 +4,7 @@ from .serializers import *
 from rest_framework import status
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
+from django.db.models import Q
 
 
 class CustomerRegisterViewSet(ViewSet):
@@ -70,7 +71,7 @@ class CustomerRegisterViewSet(ViewSet):
             user.save()
 
             dict_response = {
-                'error': True,
+                'error': False,
                 'message': 'registration successfully',
             }
             return Response(dict_response, status=status.HTTP_201_CREATED)
@@ -125,3 +126,28 @@ class UserLoginViewSet(ViewSet):
             return Response(dict_response, status=status.HTTP_502_BAD_GATEWAY)
 
 
+class ProductSearchViewSet(ViewSet):
+
+    def list(self, request):
+
+        search_key = self.request.query_params.get('search_key')
+
+        if search_key:
+            product_search = Product.objects.filter(
+                name__icontains=search_key
+            )
+            print('product_search = ', product_search)
+            product_search_serializer = ProductSerializer(product_search, many=True)
+            dict_response = {
+                'error': False,
+                'message': 'search result found',
+                'data': product_search_serializer.data,
+                'total_found': product_search.count()
+            }
+            return Response(dict_response, status=status.HTTP_200_OK)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'search key required'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)

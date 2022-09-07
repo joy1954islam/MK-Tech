@@ -14,3 +14,9 @@ class RegisterSerializer(ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'password')
         extra_kwargs = {'password': {'write_only': True}}
+
+
+class ProductSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'

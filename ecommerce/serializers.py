@@ -20,3 +20,15 @@ class ProductSerializer(ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+
+
+class OrderSerializer(ModelSerializer):
+    class Meta:
+        model = Order
+        fields = '__all__'
+
+
+class OrderDetailSerializer(ModelSerializer):
+    class Meta:
+        model = OrderDetails
+        fields = "__all__"

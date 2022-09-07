@@ -174,3 +174,62 @@ class AllCustomerListViewSet(ViewSet):
                 'message': 'you are not admin'
             }
             return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateOrderViewSet(ViewSet):
+
+    def create(self, request):
+        print('request data = ', request.data)
+        user_id = request.data['user_id']
+        product_id = request.data['product_id']
+        quantity = request.data['quantity']
+
+        if user_id == '':
+            dict_response = {
+                'error': True,
+                'message': 'user required'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+        product_id_split = product_id.split(',')
+        print('product_id_split = ', product_id_split)
+        quantity_split = quantity.split(',')
+        print('quantity_split = ', quantity_split)
+
+        if len(product_id_split) == len(quantity_split):
+            order_create = {}
+            order_create['user_id'] = user_id
+            order_create_serializer = OrderSerializer(data=order_create)
+            order_create_serializer.is_valid(raise_exception=True)
+            order_create_serializer.save()
+
+            order_id = order_create_serializer.data['id']
+
+            for p in range(0, len(product_id_split)):
+                product_value = product_id_split[p]
+                product_quantity = product_id_split[p]
+                product = Product.objects.filter(id=product_value)
+                order_details_create = {}
+                order_details_create['order_id'] = order_id
+                order_details_create['product_id'] = product_value
+                order_details_create['quantity'] = product_quantity
+                total_price = float(product[0].price) * float(product_quantity)
+                order_details_create['price'] = float(total_price)
+
+                order_details_create_serializer = OrderDetailSerializer(
+                    data=order_details_create, context={'request': request})
+
+                order_details_create_serializer.is_valid(raise_exception=True)
+                order_details_create_serializer.save()
+
+            dict_response = {
+                'error': False,
+                'message': 'order create successfully'
+            }
+            return Response(dict_response, status=status.HTTP_201_CREATED)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'order not create'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)

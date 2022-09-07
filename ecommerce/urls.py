@@ -12,6 +12,8 @@ router.register('product-search', views.ProductSearchViewSet, basename='product_
 
 router.register('admin-view-all-customer-list', views.AllCustomerListViewSet, basename='admin_view_all_customer_list')
 
+router.register('order_create', views.CreateOrderViewSet, basename='order_create')
+
 urlpatterns = [
     # API view Route
     path('api/', include(router.urls)),

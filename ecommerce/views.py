@@ -131,26 +131,57 @@ class ProductSearchViewSet(ViewSet):
     def list(self, request):
 
         search_key = self.request.query_params.get('search_key')
-
+        min_amount = self.request.query_params.get('min_amount')
+        max_amount = self.request.query_params.get('max_amount')
+        print('search_key = ', search_key)
         if search_key:
             product_search = Product.objects.filter(
                 name__icontains=search_key
             )
             print('product_search = ', product_search)
-            product_search_serializer = ProductSerializer(product_search, many=True)
-            dict_response = {
-                'error': False,
-                'message': 'search result found',
-                'data': product_search_serializer.data,
-                'total_found': product_search.count()
-            }
-            return Response(dict_response, status=status.HTTP_200_OK)
-        else:
-            dict_response = {
-                'error': True,
-                'message': 'search key required'
-            }
-            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+        if min_amount:
+            product_search = Product.objects.filter(
+                price__gte=min_amount
+            )
+            print('product_search = ', product_search)
+        if max_amount:
+            product_search = Product.objects.filter(
+                price__lte=max_amount
+            )
+            print('product_search = ', product_search)
+        if search_key and min_amount:
+            product_search = product_search = Product.objects.filter(
+                name__icontains=search_key,
+                price__gte=min_amount,
+            )
+        if search_key and max_amount:
+            product_search = Product.objects.filter(
+                name__icontains=search_key,
+                price__lte=max_amount,
+            )
+        if min_amount and max_amount:
+            product_search = Product.objects.filter(
+                price__gte=min_amount,
+                price__lte=max_amount,
+            )
+        if search_key and min_amount and max_amount:
+            product_search = Product.objects.filter(
+                name__icontains=search_key,
+                price__gte=min_amount,
+                price__lte=max_amount,
+            )
+            print('product_search = ', product_search)
+        if search_key == '' and min_amount == '' and max_amount == '':
+            product_search = Product.objects.all()
+
+        product_search_serializer = ProductSerializer(product_search, many=True)
+        dict_response = {
+            'error': False,
+            'message': 'search result found',
+            'data': product_search_serializer.data,
+            'total_found': product_search.count()
+        }
+        return Response(dict_response, status=status.HTTP_200_OK)
 
 
 class AllCustomerListViewSet(ViewSet):
@@ -298,6 +329,171 @@ class AdminViewAllOrderList(ViewSet):
                 'error': False,
                 'message': 'all order list',
                 'data': order_serializer.data
+            }
+            return Response(dict_response, status=status.HTTP_200_OK)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'you are not admin'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductViewSet(ViewSet):
+
+    def list(self, request):
+        user_id = self.request.query_params.get('user_id')
+        user = User.objects.filter(id=user_id, is_superuser=True)
+        if len(user) != 0:
+            product = Product.objects.all()
+            product_serializer = ProductSerializer(product, many=True)
+            dict_response = {
+                'error': False,
+                'message': 'product data list',
+                'data': product_serializer.data
+            }
+            return Response(dict_response, status=status.HTTP_200_OK)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'you are not admin'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+    def create(self, request):
+        user_id = self.request.query_params.get('user_id')
+        user = User.objects.filter(id=user_id, is_superuser=True)
+        if len(user) != 0:
+            name = request.data['name']
+            image1 = request.FILES['image1']
+            image2 = request.FILES['image2']
+            stock = request.data['stock']
+            price = request.data['price']
+            if name == '':
+                dict_response = {
+                    'error': True,
+                    'message': 'product name required'
+                }
+                return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+            if image1 == '' and image2 == '':
+                dict_response = {
+                    'error': True,
+                    'message': 'image required'
+                }
+                return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+            if stock == '':
+                dict_response = {
+                    'error': True,
+                    'message': 'stock required'
+                }
+                return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+            if price == '':
+                dict_response = {
+                    'error': True,
+                    'message': 'stock required'
+                }
+                return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+            product_create = {}
+            product_create['name'] = name
+            product_create['image1'] = image1
+            product_create['image2'] = image2
+            product_create['stock'] = stock
+            product_create['price'] = price
+
+            product_create_serializer = ProductSerializer(data=product_create, context={'request': request})
+            product_create_serializer.is_valid(raise_exception=True)
+            product_create_serializer.save()
+
+            dict_response = {
+                'error': False,
+                'message': 'product create successfully'
+            }
+            return Response(dict_response, status=status.HTTP_201_CREATED)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'you are not admin'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        user_id = self.request.query_params.get('user_id')
+        user = User.objects.filter(id=user_id, is_superuser=True)
+        if len(user) != 0:
+            product = Product.objects.filter(id=pk)
+            product_serializer = ProductSerializer(product[0])
+            dict_response = {
+                'error': False,
+                'message': 'product retrieve data',
+                'data': product_serializer.data
+            }
+            return Response(dict_response, status=status.HTTP_200_OK)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'you are not admin'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        print('request data = ', request.data)
+        user_id = self.request.query_params.get('user_id')
+        user = User.objects.filter(id=user_id, is_superuser=True)
+        if len(user) != 0:
+            product = Product.objects.filter(id=pk)
+            name = request.data['name']
+            image1 = request.data['image1']
+            image2 = request.data['image2']
+            stock = request.data['stock']
+            price = request.data['price']
+            order_update = {}
+            if name == '':
+                order_update['name'] = product[0].name
+            else:
+                order_update['name'] = name
+            if image1 == '':
+                pass
+            else:
+                order_update['image1'] = image1
+            if image2 == '':
+                pass
+            else:
+                order_update['image2'] = image2
+            if stock == '':
+                order_update['stock'] = product[0].stock
+            else:
+                order_update['stock'] = stock
+            if price == '':
+                order_update['price'] = product[0].price
+            else:
+                order_update['price'] = price
+            product_update_serializer = ProductSerializer(product[0], data=order_update, partial=True, context={'request': request})
+            product_update_serializer.is_valid(raise_exception=True)
+            product_update_serializer.save()
+
+            dict_response = {
+                'error': False,
+                'message': 'product update successfully',
+                'data': product_update_serializer.data
+            }
+            return Response(dict_response, status=status.HTTP_201_CREATED)
+        else:
+            dict_response = {
+                'error': True,
+                'message': 'you are not admin'
+            }
+            return Response(dict_response, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        user_id = self.request.query_params.get('user_id')
+        user = User.objects.filter(id=user_id, is_superuser=True)
+        if len(user) != 0:
+            product = Product.objects.filter(id=pk)
+            product[0].delete()
+            dict_response = {
+                'error': False,
+                'message': 'product deleted'
             }
             return Response(dict_response, status=status.HTTP_200_OK)
         else:

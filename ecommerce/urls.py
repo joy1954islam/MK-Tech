@@ -18,6 +18,8 @@ router.register('order-status-change', views.OrderStatusChangeViewSet, basename=
 
 router.register('admin-view-all-order', views.AdminViewAllOrderList, basename='admin_view_all_order')
 
+router.register('product', views.ProductViewSet, basename='product')
+
 urlpatterns = [
     # API view Route
     path('api/', include(router.urls)),
